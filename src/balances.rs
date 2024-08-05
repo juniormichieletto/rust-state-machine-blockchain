@@ -10,4 +10,12 @@ impl Pallet {
             balances: BTreeMap::new(),
         }
     }
+
+    pub fn set_balance(&mut self, who: &String, amount: u128) {
+        self.balances.insert(who.to_string(), amount);
+    }
+
+    pub fn balance(&self, who: &String) -> u128 {
+        *self.balances.get(who).unwrap_or(&0)
+    }
 }
