@@ -1,3 +1,7 @@
+mod ballances;
+use crate::ballances::Pallet;
+
 fn main() {
-    println!("Hello, world!");
+    let pallet = Pallet { ballance: 100 };
+    println!("Pallet 1, ballance:{}", pallet.ballance);
 }
