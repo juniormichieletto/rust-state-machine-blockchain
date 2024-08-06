@@ -4,6 +4,6 @@ mod system;
 use crate::system::Pallet;
 
 fn main() {
-    let pallet = Pallet::new();
+    let _ = Pallet::new();
     println!("Okok");
 }
