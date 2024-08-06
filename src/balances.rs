@@ -18,6 +18,32 @@ impl Pallet {
     pub fn balance(&self, who: &String) -> u128 {
         *self.balances.get(who).unwrap_or(&0)
     }
+
+    /// Transfer `amount` from one account to another.
+    /// This function verifies that `from` has at least `amount` balance to transfer,
+    /// and that no mathematical overflows occur.
+    pub fn transfer(
+        &mut self,
+        caller: String,
+        to: String,
+        amount: u128,
+    ) -> Result<(), &'static str> {
+        let caller_balance = self.balance(&caller);
+        let to_balance = self.balance(&to);
+
+        let new_caller_balance = caller_balance
+            .checked_sub(amount)
+            .ok_or("Balance not enough for the transfer");
+
+        let to_new_balance = to_balance
+            .checked_add(amount)
+            .ok_or("Overflow to add balance");
+
+        self.set_balance(&caller, new_caller_balance?);
+        self.set_balance(&to, to_new_balance?);
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -38,5 +64,35 @@ mod tests {
 
         assert_eq!(ballances.balance(alice), 100);
         assert_eq!(ballances.balance(bob), 0);
+    }
+
+    #[test]
+    fn transfer_without_balance() {
+        let alice: String = "alice".to_string();
+        let bob: String = "bob".to_string();
+        let mut ballances = Pallet::new();
+
+        let result = ballances.transfer(alice, bob, 100);
+
+        assert!(result.is_err_and(|e| e == "Balance not enough for the transfer"));
+    }
+
+    #[test]
+    fn transfer_balance() {
+        let alice: String = "alice".to_string();
+        let bob: String = "bob".to_string();
+
+        let mut ballances = Pallet::new();
+        let transfer_result = ballances.transfer(alice.clone(), bob.clone(), 100);
+        assert!(transfer_result.is_err_and(|e| e == "Balance not enough for the transfer"));
+
+        ballances.set_balance(&alice, 100);
+        assert_eq!(ballances.balance(&alice), 100);
+        assert_eq!(ballances.balance(&bob), 0);
+
+        let transfer_result = ballances.transfer(alice.clone(), bob.clone(), 100);
+        assert!(transfer_result.is_ok());
+        assert_eq!(ballances.balance(&alice), 0);
+        assert_eq!(ballances.balance(&bob), 100);
     }
 }
