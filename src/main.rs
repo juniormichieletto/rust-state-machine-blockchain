@@ -3,6 +3,7 @@ mod system;
 
 // This is our main Runtime.
 // It accumulates all of the different pallets we want to use.
+#[derive(Debug)]
 pub struct Runtime {
     pub system: system::Pallet,
     pub balances: balances::Pallet,
@@ -44,5 +45,5 @@ fn main() {
     assert_eq!(runtime.balances.balance(&"alice".to_string()), 50);
     assert_eq!(runtime.balances.balance(&"bob".to_string()), 50);
 
-    println!("Okok");
+    println!("Okok {:#?}", runtime);
 }
