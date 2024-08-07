@@ -1,8 +1,15 @@
 use std::collections::BTreeMap;
 
+type AccountId = String;
+type Balance = u128;
+
+/// This is the Balances Module.
+/// It is a simple module which keeps track of how much balance each account has in this state
+/// machine.
 #[derive(Debug)]
 pub struct Pallet {
-    pub balances: BTreeMap<String, u128>,
+    // A simple storage mapping from accounts (`String`) to their balances (`u128`).
+    pub balances: BTreeMap<AccountId, Balance>,
 }
 
 impl Pallet {
@@ -12,11 +19,11 @@ impl Pallet {
         }
     }
 
-    pub fn set_balance(&mut self, who: &String, amount: u128) {
+    pub fn set_balance(&mut self, who: &AccountId, amount: u128) {
         self.balances.insert(who.to_string(), amount);
     }
 
-    pub fn balance(&self, who: &String) -> u128 {
+    pub fn balance(&self, who: &AccountId) -> u128 {
         *self.balances.get(who).unwrap_or(&0)
     }
 
@@ -25,8 +32,8 @@ impl Pallet {
     /// and that no mathematical overflows occur.
     pub fn transfer(
         &mut self,
-        caller: String,
-        to: String,
+        caller: AccountId,
+        to: AccountId,
         amount: u128,
     ) -> Result<(), &'static str> {
         let caller_balance = self.balance(&caller);
@@ -49,7 +56,7 @@ impl Pallet {
 
 #[cfg(test)]
 mod tests {
-    use crate::balances::Pallet;
+    use crate::balances::{AccountId, Pallet};
 
     #[test]
     fn init_balances() {
@@ -69,8 +76,8 @@ mod tests {
 
     #[test]
     fn transfer_without_balance() {
-        let alice: String = "alice".to_string();
-        let bob: String = "bob".to_string();
+        let alice: AccountId = "alice".to_string();
+        let bob: AccountId = "bob".to_string();
         let mut ballances = Pallet::new();
 
         let result = ballances.transfer(alice, bob, 100);
@@ -80,8 +87,8 @@ mod tests {
 
     #[test]
     fn transfer_balance() {
-        let alice: String = "alice".to_string();
-        let bob: String = "bob".to_string();
+        let alice: AccountId = "alice".to_string();
+        let bob: AccountId = "bob".to_string();
 
         let mut ballances = Pallet::new();
         let transfer_result = ballances.transfer(alice.clone(), bob.clone(), 100);

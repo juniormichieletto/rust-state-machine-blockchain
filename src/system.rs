@@ -1,11 +1,15 @@
 use std::collections::BTreeMap;
 
+type AccountID = String;
+type BlockNumber = u128;
+type Nonce = u32;
+
 /// This is the System Pallet.
 /// It handles low level state needed for your blockchain.
 #[derive(Debug)]
 pub struct Pallet {
-    pub block_number: u32,
-    pub nonce: BTreeMap<String, u32>,
+    pub block_number: BlockNumber,
+    pub nonce: BTreeMap<AccountID, Nonce>,
 }
 
 impl Pallet {
@@ -17,7 +21,7 @@ impl Pallet {
     }
 
     /// Get the current block number.
-    pub fn block_number(&self) -> u32 {
+    pub fn block_number(&self) -> BlockNumber {
         self.block_number
     }
 
@@ -30,7 +34,7 @@ impl Pallet {
 
     // Increment the nonce of an account. This helps us keep track of how many transactions each
     // account has made.
-    pub fn inc_nonce(&mut self, who: &String) {
+    pub fn inc_nonce(&mut self, who: &AccountID) {
         let nonce = self.nonce.get(&who.to_string()).unwrap_or(&0);
 
         self.nonce.insert(who.to_string(), nonce + 1);
@@ -40,7 +44,7 @@ impl Pallet {
 #[cfg(test)]
 mod tests {
 
-    use crate::system::Pallet;
+    use crate::system::{AccountID, Nonce, Pallet};
     use std::collections::BTreeMap;
 
     #[test]
@@ -61,7 +65,7 @@ mod tests {
 
     #[test]
     fn inc_nonce() {
-        let mut expected_nonce: BTreeMap<String, u32> = BTreeMap::new();
+        let mut expected_nonce: BTreeMap<AccountID, Nonce> = BTreeMap::new();
         expected_nonce.insert("aj".to_string(), 2);
         expected_nonce.insert("aj2".to_string(), 1);
 
