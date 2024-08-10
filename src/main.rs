@@ -7,13 +7,15 @@ mod system;
 mod types {
     pub type AccountId = String;
     pub type Balance = u128;
+    pub type BlockNumber = u128;
+    pub type Nonce = u32;
 }
 
 // This is our main Runtime.
 // It accumulates all of the different pallets we want to use.
 #[derive(Debug)]
 pub struct Runtime {
-    pub system: system::Pallet,
+    pub system: system::Pallet<types::AccountId, types::BlockNumber, types::Nonce>,
     pub balances: balances::Pallet<types::AccountId, types::Balance>,
 }
 
@@ -44,7 +46,7 @@ fn main() {
         .map_err(|e| print!("Error to transfer from alice to bob, {}", e));
 
     runtime.system.inc_nonce(&"alice".to_string());
-    /* TODO: Execute another balance transfer, this time from `alice` to `charlie` for 20. */
+
     let _res = runtime
         .balances
         .transfer("alice".to_string(), "bob".to_string(), 20)
