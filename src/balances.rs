@@ -1,30 +1,32 @@
+use num::traits::{CheckedAdd, CheckedSub, Zero};
 use std::collections::BTreeMap;
 
-type AccountId = String;
-type Balance = u128;
-
-/// This is the Balances Module.
-/// It is a simple module which keeps track of how much balance each account has in this state
-/// machine.
+// This is the Balances Module.
+// It is a simple module which keeps track of how much balance each account has in this state
+// machine.
 #[derive(Debug)]
-pub struct Pallet {
+pub struct Pallet<AccountId, Balance> {
     // A simple storage mapping from accounts (`String`) to their balances (`u128`).
     pub balances: BTreeMap<AccountId, Balance>,
 }
 
-impl Pallet {
+impl<AccountId, Balance> Pallet<AccountId, Balance>
+where
+    AccountId: Ord + Clone,
+    Balance: Zero + CheckedSub + CheckedAdd + Copy,
+{
     pub fn new() -> Self {
         Self {
             balances: BTreeMap::new(),
         }
     }
 
-    pub fn set_balance(&mut self, who: &AccountId, amount: u128) {
-        self.balances.insert(who.to_string(), amount);
+    pub fn set_balance(&mut self, who: &AccountId, amount: Balance) {
+        self.balances.insert(who.clone(), amount);
     }
 
-    pub fn balance(&self, who: &AccountId) -> u128 {
-        *self.balances.get(who).unwrap_or(&0)
+    pub fn balance(&self, who: &AccountId) -> Balance {
+        *self.balances.get(who).unwrap_or(&Balance::zero())
     }
 
     /// Transfer `amount` from one account to another.
@@ -34,17 +36,17 @@ impl Pallet {
         &mut self,
         caller: AccountId,
         to: AccountId,
-        amount: u128,
+        amount: Balance,
     ) -> Result<(), &'static str> {
         let caller_balance = self.balance(&caller);
         let to_balance = self.balance(&to);
 
         let new_caller_balance = caller_balance
-            .checked_sub(amount)
+            .checked_sub(&amount)
             .ok_or("Balance not enough for the transfer");
 
         let to_new_balance = to_balance
-            .checked_add(amount)
+            .checked_add(&amount)
             .ok_or("Overflow to add balance");
 
         self.set_balance(&caller, new_caller_balance?);
@@ -56,51 +58,48 @@ impl Pallet {
 
 #[cfg(test)]
 mod tests {
-    use crate::balances::{AccountId, Pallet};
+    // use crate::balances::Pallet;
+    mod types {
+        pub type AccountId = String;
+        pub type Balance = u128;
+    }
 
     #[test]
     fn init_balances() {
-        let alice: &String = &"alice".to_string();
-        let bob: &String = &"bob".to_string();
+        let mut ballances = super::Pallet::<types::AccountId, types::Balance>::new();
 
-        let mut ballances = Pallet::new();
+        assert_eq!(ballances.balance(&String::from("alice")), 0);
+        assert_eq!(ballances.balance(&String::from("bob")), 0);
 
-        assert_eq!(ballances.balance(alice), 0);
-        assert_eq!(ballances.balance(bob), 0);
+        ballances.set_balance(&String::from("alice"), 100);
 
-        ballances.set_balance(alice, 100);
-
-        assert_eq!(ballances.balance(alice), 100);
-        assert_eq!(ballances.balance(bob), 0);
+        assert_eq!(ballances.balance(&String::from("alice")), 100);
+        assert_eq!(ballances.balance(&String::from("bob")), 0);
     }
 
     #[test]
     fn transfer_without_balance() {
-        let alice: AccountId = "alice".to_string();
-        let bob: AccountId = "bob".to_string();
-        let mut ballances = Pallet::new();
+        let mut ballances = super::Pallet::<types::AccountId, types::Balance>::new();
 
-        let result = ballances.transfer(alice, bob, 100);
+        let result = ballances.transfer(String::from("alice"), String::from("bob"), 100);
 
         assert!(result.is_err_and(|e| e == "Balance not enough for the transfer"));
     }
 
     #[test]
     fn transfer_balance() {
-        let alice: AccountId = "alice".to_string();
-        let bob: AccountId = "bob".to_string();
-
-        let mut ballances = Pallet::new();
-        let transfer_result = ballances.transfer(alice.clone(), bob.clone(), 100);
+        let mut ballances = super::Pallet::<types::AccountId, types::Balance>::new();
+        let transfer_result = ballances.transfer(String::from("alice"), String::from("bob"), 100);
         assert!(transfer_result.is_err_and(|e| e == "Balance not enough for the transfer"));
 
-        ballances.set_balance(&alice, 100);
-        assert_eq!(ballances.balance(&alice), 100);
-        assert_eq!(ballances.balance(&bob), 0);
+        ballances.set_balance(&String::from("alice"), 100);
+        assert_eq!(ballances.balance(&String::from("alice")), 100);
+        assert_eq!(ballances.balance(&String::from("bob")), 0);
 
-        let transfer_result = ballances.transfer(alice.clone(), bob.clone(), 100);
+        let transfer_result =
+            ballances.transfer(String::from("alice"), String::from("bob").clone(), 100);
         assert!(transfer_result.is_ok());
-        assert_eq!(ballances.balance(&alice), 0);
-        assert_eq!(ballances.balance(&bob), 100);
+        assert_eq!(ballances.balance(&String::from("alice")), 0);
+        assert_eq!(ballances.balance(&String::from("bob")), 100);
     }
 }
