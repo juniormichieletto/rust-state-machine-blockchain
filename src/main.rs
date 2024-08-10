@@ -6,7 +6,6 @@ mod system;
 // trait requirements.
 mod types {
     pub type AccountId = String;
-    pub type Balance = u128;
     pub type BlockNumber = u128;
     pub type Nonce = u32;
 }
@@ -16,13 +15,18 @@ mod types {
 #[derive(Debug)]
 pub struct Runtime {
     pub system: system::Pallet<Self>,
-    pub balances: balances::Pallet<types::AccountId, types::Balance>,
+    pub balances: balances::Pallet<Self>,
 }
 
 impl system::Config for Runtime {
     type AccountId = types::AccountId;
     type BlockNumber = types::BlockNumber;
     type Nonce = types::Nonce;
+}
+
+impl balances::Config for Runtime {
+    type AccountId = String;
+    type Balance = u32;
 }
 
 impl Runtime {
