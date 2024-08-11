@@ -57,6 +57,28 @@ impl<T: Config> Pallet<T> {
     }
 }
 
+// A public enum which describes the calls we want to expose to the dispatcher.
+// We should expect that the caller of each call will be provided by the dispatcher,
+// and not included as a parameter of the call.
+pub enum Call<T: Config> {
+    CreateClaim { claim: T::Content },
+    RevokeClaim { claim: T::Content },
+}
+
+/// Implementation of the dispatch logic, mapping from `POECall` to the appropriate underlying
+/// function we want to execute.
+impl<T: Config> crate::support::Dispatch for Pallet<T> {
+    type Caller = T::AccountId;
+    type Call = Call<T>;
+
+    fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> DispatchResult {
+        match call {
+            Call::CreateClaim { claim } => self.create_claim(caller, claim),
+            Call::RevokeClaim { claim } => self.revoke_claim(caller, claim),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     struct TestConfig;
@@ -71,7 +93,7 @@ mod test {
         type Nonce = u32;
     }
 
-    //TODO split the test in different tests
+    //TODO split the test in different smaller tests
     #[test]
     fn basic_proof_of_existence() {
         let mut poe = super::Pallet::<TestConfig>::new();
