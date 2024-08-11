@@ -14,21 +14,8 @@ pub struct Pallet<T: Config> {
     pub balances: BTreeMap<T::AccountId, T::Balance>,
 }
 
+#[macros::call]
 impl<T: Config> Pallet<T> {
-    pub fn new() -> Self {
-        Self {
-            balances: BTreeMap::new(),
-        }
-    }
-
-    pub fn set_balance(&mut self, who: &T::AccountId, amount: T::Balance) {
-        self.balances.insert(who.clone(), amount);
-    }
-
-    pub fn balance(&self, who: &T::AccountId) -> T::Balance {
-        *self.balances.get(who).unwrap_or(&T::Balance::zero())
-    }
-
     /// Transfer `amount` from one account to another.
     /// This function verifies that `from` has at least `amount` balance to transfer,
     /// and that no mathematical overflows occur.
@@ -56,32 +43,19 @@ impl<T: Config> Pallet<T> {
     }
 }
 
-// A public enum which describes the calls we want to expose to the dispatcher.
-// We should expect that the caller of each call will be provided by the dispatcher,
-// and not included as a parameter of the call.
-pub enum Call<T: Config> {
-    Transfer {
-        to: T::AccountId,
-        amount: T::Balance,
-    },
-}
-
-/// Implementation of the dispatch logic, mapping from `BalancesCall` to the appropriate underlying
-impl<T: Config> crate::support::Dispatch for Pallet<T> {
-    type Caller = T::AccountId;
-    type Call = Call<T>;
-
-    fn dispatch(
-        &mut self,
-        caller: Self::Caller,
-        call: Self::Call,
-    ) -> crate::support::DispatchResult {
-        match call {
-            Call::Transfer { to, amount } => {
-                self.transfer(caller, to, amount)?;
-            }
+impl<T: Config> Pallet<T> {
+    pub fn new() -> Self {
+        Self {
+            balances: BTreeMap::new(),
         }
-        Ok(())
+    }
+
+    pub fn set_balance(&mut self, who: &T::AccountId, amount: T::Balance) {
+        self.balances.insert(who.clone(), amount);
+    }
+
+    pub fn balance(&self, who: &T::AccountId) -> T::Balance {
+        *self.balances.get(who).unwrap_or(&T::Balance::zero())
     }
 }
 
