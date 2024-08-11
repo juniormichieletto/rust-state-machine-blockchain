@@ -1,8 +1,11 @@
 # rust-state-machine-blockchain
 
-Rust project creating a Blockchain State machine inspired from Polkadot SDK in high-level for studying ;)
+Rust project creating a Blockchain State machine inspired from Polkadot SDK for studying.
 
-> WIP..
+Wanna try as well? Use the link below ;)
+
+[build.w3d.community/courses/Rust_State_Machine](https://build.w3d.community/courses/Rust_State_Machine)
+
 
 ## Requirements
 
