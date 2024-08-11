@@ -18,6 +18,7 @@ mod types {
     pub type Extrinsic = support::Extrinsic<AccountId, crate::RuntimeCall>;
     pub type Header = support::Header<BlockNumber>;
     pub type Block = support::Block<Header, Extrinsic>;
+    pub type Content = &'static str;
 }
 
 // This is our main Runtime.
@@ -26,6 +27,7 @@ mod types {
 pub struct Runtime {
     pub system: system::Pallet<Self>,
     pub balances: balances::Pallet<Self>,
+    pub proof_of_existence: proof_of_existence::Pallet<Self>,
 }
 
 impl system::Config for Runtime {
@@ -38,11 +40,16 @@ impl balances::Config for Runtime {
     type Balance = types::Balance;
 }
 
+impl proof_of_existence::Config for Runtime {
+    type Content = types::Content;
+}
+
 impl Runtime {
     fn new() -> Self {
         Self {
             system: system::Pallet::new(),
             balances: balances::Pallet::new(),
+            proof_of_existence: proof_of_existence::Pallet::new(),
         }
     }
 
@@ -71,6 +78,7 @@ impl Runtime {
 // Note that it is just an accumulation of the calls exposed by each module.
 pub enum RuntimeCall {
     Balances(balances::Call<Runtime>),
+    ProofOfExistence(proof_of_existence::Call<Runtime>),
 }
 
 impl crate::support::Dispatch for Runtime {
@@ -89,6 +97,9 @@ impl crate::support::Dispatch for Runtime {
         match runtime_call {
             RuntimeCall::Balances(call) => {
                 self.balances.dispatch(caller, call)?;
+            }
+            RuntimeCall::ProofOfExistence(call) => {
+                self.proof_of_existence.dispatch(caller, call)?;
             }
         }
         Ok(())
@@ -117,7 +128,7 @@ fn main() {
                 }),
             },
             support::Extrinsic {
-                caller: alice,
+                caller: alice.clone(),
                 call: RuntimeCall::Balances(balances::Call::Transfer {
                     to: charlie,
                     amount: 30,
@@ -128,6 +139,28 @@ fn main() {
 
     runtime
         .execute_block(block_1)
+        .expect("wrong block execution");
+
+    let block_2 = types::Block {
+        header: support::Header { block_number: 2 },
+        extrinsics: vec![
+            support::Extrinsic {
+                caller: alice.clone(),
+                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim {
+                    claim: "my_document",
+                }),
+            },
+            support::Extrinsic {
+                caller: alice,
+                call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim {
+                    claim: "my_document2",
+                }),
+            },
+        ],
+    };
+
+    runtime
+        .execute_block(block_2)
         .expect("wrong block execution");
 
     // Simply print the debug format of our runtime state.
