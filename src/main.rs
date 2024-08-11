@@ -123,7 +123,7 @@ fn main() {
             support::Extrinsic {
                 caller: alice.clone(),
                 call: RuntimeCall::Balances(balances::Call::Transfer {
-                    to: bob,
+                    to: bob.clone(),
                     amount: 20,
                 }),
             },
@@ -151,9 +151,9 @@ fn main() {
                 }),
             },
             support::Extrinsic {
-                caller: alice,
+                caller: bob,
                 call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim {
-                    claim: "my_document2",
+                    claim: "Bobs Doc",
                 }),
             },
         ],
