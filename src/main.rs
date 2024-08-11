@@ -19,15 +19,6 @@ mod types {
     pub type Block = support::Block<Header, Extrinsic>;
 }
 
-// These are all the calls which are exposed to the world.
-// Note that it is just an accumulation of the calls exposed by each module.
-pub enum RuntimeCall {
-    BalancesTransfer {
-        to: types::AccountId,
-        amount: types::Balance,
-    },
-}
-
 // This is our main Runtime.
 // It accumulates all of the different pallets we want to use.
 #[derive(Debug)]
@@ -75,6 +66,12 @@ impl Runtime {
     }
 }
 
+// These are all the calls which are exposed to the world.
+// Note that it is just an accumulation of the calls exposed by each module.
+pub enum RuntimeCall {
+    Balances(balances::Call<Runtime>),
+}
+
 impl crate::support::Dispatch for Runtime {
     type Caller = <Runtime as system::Config>::AccountId;
     type Call = RuntimeCall;
@@ -89,8 +86,8 @@ impl crate::support::Dispatch for Runtime {
         runtime_call: Self::Call,
     ) -> support::DispatchResult {
         match runtime_call {
-            RuntimeCall::BalancesTransfer { to, amount } => {
-                self.balances.transfer(caller, to, amount)?;
+            RuntimeCall::Balances(call) => {
+                self.balances.dispatch(caller, call)?;
             }
         }
         Ok(())
@@ -113,17 +110,17 @@ fn main() {
         extrinsics: vec![
             support::Extrinsic {
                 caller: alice.clone(),
-                call: RuntimeCall::BalancesTransfer {
+                call: RuntimeCall::Balances(balances::Call::Transfer {
                     to: bob,
                     amount: 20,
-                },
+                }),
             },
             support::Extrinsic {
                 caller: alice,
-                call: RuntimeCall::BalancesTransfer {
+                call: RuntimeCall::Balances(balances::Call::Transfer {
                     to: charlie,
                     amount: 30,
-                },
+                }),
             },
         ],
     };
