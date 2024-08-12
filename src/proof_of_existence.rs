@@ -73,25 +73,59 @@ mod test {
         type Nonce = u32;
     }
 
-    //TODO split the test in different smaller tests
     #[test]
-    fn basic_proof_of_existence() {
+    fn test_get_claim_return_empty() {
+        let poe = super::Pallet::<TestConfig>::new();
+
+        assert_eq!(poe.get_claim(&"non_existent_document"), None);
+    }
+
+    #[test]
+    fn create_claim() {
         let mut poe = super::Pallet::<TestConfig>::new();
 
         let _ = poe.create_claim("alice".to_string(), &"my_document");
+
         assert_eq!(poe.get_claim(&"my_document"), Some(&"alice".to_string()));
+    }
 
-        let res = poe.revoke_claim("bob".to_string(), &"my_document");
-        assert_eq!(res, Err("Caller is not the owner of the claim"));
+    #[test]
+    fn create_claim_duplicated_return_claim_exists() {
+        let mut poe = super::Pallet::<TestConfig>::new();
 
+        let _ = poe.create_claim("alice".to_string(), &"my_document");
         let res = poe.create_claim("alice".to_string(), &"my_document");
-        assert_eq!(res, Err("Claim already exists"));
 
-        let res = poe.revoke_claim("alice".to_string(), &"non existent document");
-        assert_eq!(res, Err("Claim does not exists"));
+        assert_eq!(res, Err("Claim already exists"));
+    }
+
+    #[test]
+    fn revoke_claim() {
+        let mut poe = super::Pallet::<TestConfig>::new();
+        let _ = poe.create_claim("alice".to_string(), &"my_document");
 
         let res = poe.revoke_claim("alice".to_string(), &"my_document");
+
         assert_eq!(res, Ok(()));
         assert_eq!(poe.get_claim(&"my_document"), None);
+    }
+
+    #[test]
+    fn revoke_claim_return_claim_does_not_exists() {
+        let mut poe = super::Pallet::<TestConfig>::new();
+
+        let res = poe.revoke_claim("alice".to_string(), &"non existent document");
+
+        assert_eq!(res, Err("Claim does not exists"));
+    }
+
+    #[test]
+    fn revoke_claim_return_caller_isnt_owner_to_revoke() {
+        let mut poe = super::Pallet::<TestConfig>::new();
+        let _ = poe.create_claim("alice".to_string(), &"my_document");
+
+        let res = poe.revoke_claim("bob".to_string(), &"my_document");
+
+        assert_eq!(res, Err("Caller is not the owner of the claim"));
     }
 }
